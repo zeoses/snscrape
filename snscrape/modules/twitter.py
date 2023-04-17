@@ -875,91 +875,92 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
 
 	def _make_tweet(self, tweet, user, retweetedTweet = None, quotedTweet = None, card = None, **kwargs):
 		tweetId = self._get_tweet_id(tweet)
-		kwargs['id'] = tweetId
-		kwargs['rawContent'] = tweet['full_text']
-		kwargs['renderedContent'] = self._render_text_with_urls(tweet['full_text'], tweet['entities'].get('urls'))
-		kwargs['user'] = user
-		kwargs['date'] = email.utils.parsedate_to_datetime(tweet['created_at'])
-		if tweet['entities'].get('urls'):
-			kwargs['links'] = [TextLink(
-			                     text = u.get('display_url'),
-			                     url = u['expanded_url'],
-			                     tcourl = u['url'],
-			                     indices = tuple(u['indices']),
-			                   ) for u in tweet['entities']['urls']]
-		kwargs['url'] = f'https://twitter.com/{user.username}/status/{tweetId}'
-		kwargs['replyCount'] = tweet['reply_count']
-		kwargs['retweetCount'] = tweet['retweet_count']
-		kwargs['likeCount'] = tweet['favorite_count']
-		kwargs['quoteCount'] = tweet['quote_count']
-		kwargs['conversationId'] = tweet['conversation_id'] if 'conversation_id' in tweet else int(tweet['conversation_id_str'])
-		kwargs['lang'] = tweet['lang']
-		if 'source' in tweet:
-			kwargs['source'] = tweet['source']
-			if (match := re.search(r'href=[\'"]?([^\'" >]+)', tweet['source'])):
-				kwargs['sourceUrl'] = match.group(1)
-			if (match := re.search(r'>([^<]*)<', tweet['source'])):
-				kwargs['sourceLabel'] = match.group(1)
-		if 'extended_entities' in tweet and 'media' in tweet['extended_entities']:
-			media = []
-			for medium in tweet['extended_entities']['media']:
-				if (mediumO := self._make_medium(medium, tweetId)):
-					media.append(mediumO)
-			if media:
-				kwargs['media'] = media
-		if retweetedTweet:
-			kwargs['retweetedTweet'] = retweetedTweet
-		if quotedTweet:
-			kwargs['quotedTweet'] = quotedTweet
-		if (inReplyToTweetId := tweet.get('in_reply_to_status_id_str')):
-			kwargs['inReplyToTweetId'] = int(inReplyToTweetId)
-			inReplyToUserId = int(tweet['in_reply_to_user_id_str'])
-			if inReplyToUserId == kwargs['user'].id:
-				kwargs['inReplyToUser'] = kwargs['user']
-			elif tweet['entities'].get('user_mentions'):
-				for u in tweet['entities']['user_mentions']:
-					if u['id_str'] == tweet['in_reply_to_user_id_str']:
-						kwargs['inReplyToUser'] = User(username = u['screen_name'], id = u['id'] if 'id' in u else int(u['id_str']), displayname = u['name'])
-			if 'inReplyToUser' not in kwargs:
-				kwargs['inReplyToUser'] = User(username = tweet['in_reply_to_screen_name'], id = inReplyToUserId)
-		if tweet['entities'].get('user_mentions'):
-			kwargs['mentionedUsers'] = [User(username = u['screen_name'], id = u['id'] if 'id' in u else int(u['id_str']), displayname = u['name']) for u in tweet['entities']['user_mentions']]
+		return [tweetId, tweet, user]
+		# kwargs['id'] = tweetId
+		# kwargs['rawContent'] = tweet['full_text']
+		# kwargs['renderedContent'] = self._render_text_with_urls(tweet['full_text'], tweet['entities'].get('urls'))
+		# kwargs['user'] = user
+		# kwargs['date'] = email.utils.parsedate_to_datetime(tweet['created_at'])
+		# if tweet['entities'].get('urls'):
+		# 	kwargs['links'] = [TextLink(
+		# 	                     text = u.get('display_url'),
+		# 	                     url = u['expanded_url'],
+		# 	                     tcourl = u['url'],
+		# 	                     indices = tuple(u['indices']),
+		# 	                   ) for u in tweet['entities']['urls']]
+		# kwargs['url'] = f'https://twitter.com/{user.username}/status/{tweetId}'
+		# kwargs['replyCount'] = tweet['reply_count']
+		# kwargs['retweetCount'] = tweet['retweet_count']
+		# kwargs['likeCount'] = tweet['favorite_count']
+		# kwargs['quoteCount'] = tweet['quote_count']
+		# kwargs['conversationId'] = tweet['conversation_id'] if 'conversation_id' in tweet else int(tweet['conversation_id_str'])
+		# kwargs['lang'] = tweet['lang']
+		# if 'source' in tweet:
+		# 	kwargs['source'] = tweet['source']
+		# 	if (match := re.search(r'href=[\'"]?([^\'" >]+)', tweet['source'])):
+		# 		kwargs['sourceUrl'] = match.group(1)
+		# 	if (match := re.search(r'>([^<]*)<', tweet['source'])):
+		# 		kwargs['sourceLabel'] = match.group(1)
+		# if 'extended_entities' in tweet and 'media' in tweet['extended_entities']:
+		# 	media = []
+		# 	for medium in tweet['extended_entities']['media']:
+		# 		if (mediumO := self._make_medium(medium, tweetId)):
+		# 			media.append(mediumO)
+		# 	if media:
+		# 		kwargs['media'] = media
+		# if retweetedTweet:
+		# 	kwargs['retweetedTweet'] = retweetedTweet
+		# if quotedTweet:
+		# 	kwargs['quotedTweet'] = quotedTweet
+		# if (inReplyToTweetId := tweet.get('in_reply_to_status_id_str')):
+		# 	kwargs['inReplyToTweetId'] = int(inReplyToTweetId)
+		# 	inReplyToUserId = int(tweet['in_reply_to_user_id_str'])
+		# 	if inReplyToUserId == kwargs['user'].id:
+		# 		kwargs['inReplyToUser'] = kwargs['user']
+		# 	elif tweet['entities'].get('user_mentions'):
+		# 		for u in tweet['entities']['user_mentions']:
+		# 			if u['id_str'] == tweet['in_reply_to_user_id_str']:
+		# 				kwargs['inReplyToUser'] = User(username = u['screen_name'], id = u['id'] if 'id' in u else int(u['id_str']), displayname = u['name'])
+		# 	if 'inReplyToUser' not in kwargs:
+		# 		kwargs['inReplyToUser'] = User(username = tweet['in_reply_to_screen_name'], id = inReplyToUserId)
+		# if tweet['entities'].get('user_mentions'):
+		# 	kwargs['mentionedUsers'] = [User(username = u['screen_name'], id = u['id'] if 'id' in u else int(u['id_str']), displayname = u['name']) for u in tweet['entities']['user_mentions']]
 
-		# https://developer.twitter.com/en/docs/tutorials/filtering-tweets-by-location
-		if tweet.get('coordinates'):
-			# coordinates root key (if present) presents coordinates in the form [LONGITUDE, LATITUDE]
-			if (coords := tweet['coordinates']['coordinates']) and len(coords) == 2:
-				kwargs['coordinates'] = Coordinates(coords[0], coords[1])
-		elif tweet.get('geo'):
-			# coordinates root key (if present) presents coordinates in the form [LATITUDE, LONGITUDE]
-			if (coords := tweet['geo']['coordinates']) and len(coords) == 2:
-				kwargs['coordinates'] = Coordinates(coords[1], coords[0])
-		if tweet.get('place'):
-			kwargs['place'] = Place(tweet['place']['id'], tweet['place']['full_name'], tweet['place']['name'], tweet['place']['place_type'], tweet['place']['country'], tweet['place']['country_code'])
-			if 'coordinates' not in kwargs and tweet['place'].get('bounding_box') and (coords := tweet['place']['bounding_box']['coordinates']) and coords[0] and len(coords[0][0]) == 2:
-				# Take the first (longitude, latitude) couple of the "place square"
-				kwargs['coordinates'] = Coordinates(coords[0][0][0], coords[0][0][1])
-		if tweet['entities'].get('hashtags'):
-			kwargs['hashtags'] = [o['text'] for o in tweet['entities']['hashtags']]
-		if tweet['entities'].get('symbols'):
-			kwargs['cashtags'] = [o['text'] for o in tweet['entities']['symbols']]
-		if card:
-			kwargs['card'] = card
-			if hasattr(card, 'url') and '//t.co/' in card.url:
-				# Try to convert the URL to the non-shortened/t.co one
-				# Retweets inherit the card but not the outlinks; try to get them from the retweeted tweet instead in that case.
-				candidates = []
-				if 'links' in kwargs:
-					candidates.extend(kwargs['links'])
-				if retweetedTweet:
-					candidates.extend(retweetedTweet.links)
-				for u in candidates:
-					if u.tcourl == card.url:
-						card.url = u.url
-						break
-				else:
-					_logger.warning(f'Could not translate t.co card URL on tweet {tweetId}')
-		return Tweet(**kwargs)
+		# # https://developer.twitter.com/en/docs/tutorials/filtering-tweets-by-location
+		# if tweet.get('coordinates'):
+		# 	# coordinates root key (if present) presents coordinates in the form [LONGITUDE, LATITUDE]
+		# 	if (coords := tweet['coordinates']['coordinates']) and len(coords) == 2:
+		# 		kwargs['coordinates'] = Coordinates(coords[0], coords[1])
+		# elif tweet.get('geo'):
+		# 	# coordinates root key (if present) presents coordinates in the form [LATITUDE, LONGITUDE]
+		# 	if (coords := tweet['geo']['coordinates']) and len(coords) == 2:
+		# 		kwargs['coordinates'] = Coordinates(coords[1], coords[0])
+		# if tweet.get('place'):
+		# 	kwargs['place'] = Place(tweet['place']['id'], tweet['place']['full_name'], tweet['place']['name'], tweet['place']['place_type'], tweet['place']['country'], tweet['place']['country_code'])
+		# 	if 'coordinates' not in kwargs and tweet['place'].get('bounding_box') and (coords := tweet['place']['bounding_box']['coordinates']) and coords[0] and len(coords[0][0]) == 2:
+		# 		# Take the first (longitude, latitude) couple of the "place square"
+		# 		kwargs['coordinates'] = Coordinates(coords[0][0][0], coords[0][0][1])
+		# if tweet['entities'].get('hashtags'):
+		# 	kwargs['hashtags'] = [o['text'] for o in tweet['entities']['hashtags']]
+		# if tweet['entities'].get('symbols'):
+		# 	kwargs['cashtags'] = [o['text'] for o in tweet['entities']['symbols']]
+		# if card:
+		# 	kwargs['card'] = card
+		# 	if hasattr(card, 'url') and '//t.co/' in card.url:
+		# 		# Try to convert the URL to the non-shortened/t.co one
+		# 		# Retweets inherit the card but not the outlinks; try to get them from the retweeted tweet instead in that case.
+		# 		candidates = []
+		# 		if 'links' in kwargs:
+		# 			candidates.extend(kwargs['links'])
+		# 		if retweetedTweet:
+		# 			candidates.extend(retweetedTweet.links)
+		# 		for u in candidates:
+		# 			if u.tcourl == card.url:
+		# 				card.url = u.url
+		# 				break
+		# 		else:
+		# 			_logger.warning(f'Could not translate t.co card URL on tweet {tweetId}')
+		# return Tweet(**kwargs)
 
 	def _make_medium(self, medium, tweetId):
 		if medium['type'] == 'photo':
