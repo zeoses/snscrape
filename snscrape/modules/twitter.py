@@ -1489,41 +1489,42 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
 		return ''.join(out)
 
 	def _user_to_user(self, user, id_ = None):
-		kwargs = {}
-		kwargs['username'] = user['screen_name']
-		kwargs['id'] = id_ if id_ else user['id'] if 'id' in user else int(user['id_str'])
-		kwargs['displayname'] = user['name']
-		kwargs['rawDescription'] = user['description']
-		kwargs['renderedDescription'] = self._render_text_with_urls(user['description'], user['entities']['description'].get('urls'))
-		if user['entities']['description'].get('urls'):
-			kwargs['descriptionLinks'] = [TextLink(
-			                                text = x.get('display_url'),
-			                                url = x['expanded_url'],
-			                                tcourl = x['url'],
-			                                indices = tuple(x['indices']),
-			                              ) for x in user['entities']['description']['urls']]
-		kwargs['verified'] = user.get('verified')
-		kwargs['created'] = email.utils.parsedate_to_datetime(user['created_at'])
-		kwargs['followersCount'] = user['followers_count']
-		kwargs['friendsCount'] = user['friends_count']
-		kwargs['statusesCount'] = user['statuses_count']
-		kwargs['favouritesCount'] = user['favourites_count']
-		kwargs['listedCount'] = user['listed_count']
-		kwargs['mediaCount'] = user['media_count']
-		kwargs['location'] = user['location']
-		kwargs['protected'] = user.get('protected')
-		if user.get('url'):
-			entity = user['entities'].get('url', {}).get('urls', [None])[0]
-			if not entity or entity['url'] != user['url']:
-				_logger.warning(f'Link inconsistency on user {kwargs["id"]}')
-			if not entity:
-				entity = {'indices': (0, len(user['url']))}
-			kwargs['link'] = TextLink(text = entity.get('display_url'), url = entity.get('expanded_url', user['url']), tcourl = user['url'], indices = tuple(entity['indices']))
-		kwargs['profileImageUrl'] = user['profile_image_url_https']
-		kwargs['profileBannerUrl'] = user.get('profile_banner_url')
-		if 'ext' in user and 'highlightedLabel' in user['ext'] and (label := user['ext']['highlightedLabel']['r']['ok'].get('label')):
-			kwargs['label'] = self._user_label_to_user_label(label)
-		return User(**kwargs)
+		return user
+		# kwargs = {}
+		# kwargs['username'] = user['screen_name']
+		# kwargs['id'] = id_ if id_ else user['id'] if 'id' in user else int(user['id_str'])
+		# kwargs['displayname'] = user['name']
+		# kwargs['rawDescription'] = user['description']
+		# kwargs['renderedDescription'] = self._render_text_with_urls(user['description'], user['entities']['description'].get('urls'))
+		# if user['entities']['description'].get('urls'):
+		# 	kwargs['descriptionLinks'] = [TextLink(
+		# 	                                text = x.get('display_url'),
+		# 	                                url = x['expanded_url'],
+		# 	                                tcourl = x['url'],
+		# 	                                indices = tuple(x['indices']),
+		# 	                              ) for x in user['entities']['description']['urls']]
+		# kwargs['verified'] = user.get('verified')
+		# kwargs['created'] = email.utils.parsedate_to_datetime(user['created_at'])
+		# kwargs['followersCount'] = user['followers_count']
+		# kwargs['friendsCount'] = user['friends_count']
+		# kwargs['statusesCount'] = user['statuses_count']
+		# kwargs['favouritesCount'] = user['favourites_count']
+		# kwargs['listedCount'] = user['listed_count']
+		# kwargs['mediaCount'] = user['media_count']
+		# kwargs['location'] = user['location']
+		# kwargs['protected'] = user.get('protected')
+		# if user.get('url'):
+		# 	entity = user['entities'].get('url', {}).get('urls', [None])[0]
+		# 	if not entity or entity['url'] != user['url']:
+		# 		_logger.warning(f'Link inconsistency on user {kwargs["id"]}')
+		# 	if not entity:
+		# 		entity = {'indices': (0, len(user['url']))}
+		# 	kwargs['link'] = TextLink(text = entity.get('display_url'), url = entity.get('expanded_url', user['url']), tcourl = user['url'], indices = tuple(entity['indices']))
+		# kwargs['profileImageUrl'] = user['profile_image_url_https']
+		# kwargs['profileBannerUrl'] = user.get('profile_banner_url')
+		# if 'ext' in user and 'highlightedLabel' in user['ext'] and (label := user['ext']['highlightedLabel']['r']['ok'].get('label')):
+		# 	kwargs['label'] = self._user_label_to_user_label(label)
+		# return User(**kwargs)
 
 	def _user_label_to_user_label(self, label):
 		labelKwargs = {}
