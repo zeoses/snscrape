@@ -875,7 +875,9 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
 
 	def _make_tweet(self, tweet, user, retweetedTweet = None, quotedTweet = None, card = None, **kwargs):
 		tweetId = self._get_tweet_id(tweet)
-		return [tweetId, tweet, user]
+
+		return {'tweet_id': tweetId, 'tweet': tweet, 'user': user}
+	
 		# kwargs['id'] = tweetId
 		# kwargs['rawContent'] = tweet['full_text']
 		# kwargs['renderedContent'] = self._render_text_with_urls(tweet['full_text'], tweet['entities'].get('urls'))
