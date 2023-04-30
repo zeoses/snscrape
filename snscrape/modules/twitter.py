@@ -721,18 +721,20 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
 			return False, f'non-200 status code ({r.status_code})'
 		return True, None
 
-	def _get_api_data(self, endpoint, apiType, params):
+	def _get_api_data(self, endpoint,headers , apiType, params, ):
 		self._ensure_guest_token()
 		if apiType is _TwitterAPIType.GRAPHQL:
 			params = urllib.parse.urlencode({k: json.dumps(v, separators = (',', ':')) for k, v in params.items()}, quote_via = urllib.parse.quote)
-		r = self._get(endpoint, params = params, headers = self._apiHeaders, responseOkCallback = self._check_api_response)
+		if headers == None:
+			headers = self._apiHeaders
+		r = self._get(endpoint, params = params, headers = headers, responseOkCallback = self._check_api_response)
 		try:
 			obj = r.json()
 		except json.JSONDecodeError as e:
 			raise snscrape.base.ScraperException('Received invalid JSON from Twitter') from e
 		return obj
 
-	def _iter_api_data(self, endpoint, apiType, params, paginationParams = None, cursor = None, direction = _ScrollDirection.BOTTOM):
+	def _iter_api_data(self, endpoint, headers, apiType, params, paginationParams = None, cursor = None, direction = _ScrollDirection.BOTTOM):
 		# Iterate over endpoint with params/paginationParams, optionally starting from a cursor
 		# Handles guest token extraction using the baseUrl passed to __init__ etc.
 		# Order from params and paginationParams is preserved. To insert the cursor at a particular location, insert a 'cursor' key into paginationParams there (value is overwritten).
@@ -759,7 +761,7 @@ class _TwitterAPIScraper(snscrape.base.Scraper):
 		emptyPages = 0
 		while True:
 			_logger.info(f'Retrieving scroll page {cursor}')
-			obj = self._get_api_data(endpoint, apiType, reqParams)
+			obj = self._get_api_data(endpoint, headers, apiType, reqParams)
 			yield obj
 
 			# No data format test, just a hard and loud crash if anything's wrong :-)
@@ -1584,7 +1586,7 @@ class TwitterSearchScraperMode(enum.Enum):
 class TwitterSearchScraper(_TwitterAPIScraper):
 	name = 'twitter-search'
 
-	def __init__(self, query, *, cursor = None, mode = TwitterSearchScraperMode.LIVE, top = None, maxEmptyPages = 20, **kwargs):
+	def __init__(self, query, headers, *, cursor = None, mode = TwitterSearchScraperMode.LIVE, top = None, maxEmptyPages = 20, **kwargs):
 		if not query.strip():
 			raise ValueError('empty query')
 		if mode not in tuple(TwitterSearchScraperMode):
@@ -1595,6 +1597,7 @@ class TwitterSearchScraper(_TwitterAPIScraper):
 		if cursor is not None:
 			warnings.warn('the `cursor` argument is deprecated', snscrape.base.DeprecatedFeatureWarning, stacklevel = 2)
 		self._cursor = cursor
+		self.headers = headers
 		if top is not None:
 			replacement = f'{__name__}.TwitterSearchScraperMode.' + ('TOP' if top else 'LIVE')
 			warnings.warn(f'`top` argument is deprecated, use `mode = {replacement}` instead of `top = {bool(top)}`', snscrape.base.DeprecatedFeatureWarning, stacklevel = 2)
@@ -1662,7 +1665,7 @@ class TwitterSearchScraper(_TwitterAPIScraper):
 		params = paginationParams.copy()
 		del params['cursor']
 
-		for obj in self._iter_api_data('https://api.twitter.com/2/search/adaptive.json', _TwitterAPIType.V2, params, paginationParams, cursor = self._cursor):
+		for obj in self._iter_api_data('https://api.twitter.com/2/search/adaptive.json', self.headers, _TwitterAPIType.V2, params, paginationParams, cursor = self._cursor):
 			yield from self._v2_timeline_instructions_to_tweets_or_users(obj)
 
 	@classmethod
